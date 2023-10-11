@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <base href="http://127.0.0.1:5000/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .item {
+            width: 20%;
+            float: left;
+            text-align: center;
+            border: solid 0.5px black;
+            padding: 15px;
+            margin: 0 10px 10px 0;
+        }
+
+        .item_photo {
+            width: 50%;
+        }
+
+        .btnRemove {
+            float: right;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Add New Product</h2>
+    <input type="text" id="prod_Name" placeholder="Name" />
+    <input type="text" id="prod_Photo" placeholder="Photo" />
+    <input type="text" id="prod_Price" placeholder="Price" />
+    <button id="btnSave">Save</button>
+    <h2>Welcome to Python Store</h2>
+    {% for product in items %}
+    <div class="item">
+        <div class="btnRemove" _id="{{product._id}}">[x]</div>
+        <div class="item_name">{{product.Prod_Name}}</div>
+        <img src="{{product.Prod_Photo}}" class="item_photo" />
+        <div class="item_price">{{product.Prod_Price}}</div>
+        <button class="btnAddToCart" _id="{{product._id}}" Prod_Name="{{product.Prod_Name}}"
+            Prod_Price="{{product.Prod_Price}}">Add to cart</button>
+    </div>
+    {% endfor %}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#btnSave").click(function () {
+                var prod_Name = $("#prod_Name").val();
+                var prod_Photo = $("#prod_Photo").val();
+                var prod_Price = $("#prod_Price").val();
+                $.post("./addnewprod", {
+                    Prod_Name: prod_Name,
+                    Prod_Photo: prod_Photo,
+                    Prod_Price: prod_Price,
+                }, function (data) {
+                    console.log(data);
+                    window.location.reload();
+                });
+            });
+        });
+        $(".btnRemove").click(function () {
+            var _id = $(this).attr("_id");
+            $.post("/removeProd", { _idProd: _id }, function (data) {
+                console.log(data);
+                window.location.reload()
+            })
+        })
+    </script>
+
+</body>
+
+</html>

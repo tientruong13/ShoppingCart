@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sgin Up</title>
+</head>
+
+<body>
+    <h2>Sign in</h2>
+    <input type="text" id="User_Email" placeholder="Email" />
+    <input type="text" id="Password" placeholder="Pasword" />
+    <button id="btnSignIn">Sign in</button>
+    <!-- <h2 style="display: none;" id="welcomeMessage">Welcome back, <span id="displayUserName"></span></h2> -->
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $(document).on('click', '#btnSignIn', function () {
+                var User_Email = $("#User_Email").val();
+                var Password = $("#Password").val();
+                $.post("./login", {
+                    User_Email: User_Email,
+                    Password: Password,
+                }, function (data) {
+                    console.log(data);
+                    if (data.result === 1) {
+                        // Store username in local storage
+                        localStorage.setItem('User_Name', data.User_Name);
+
+                        // Redirect to shopping.html
+                        window.location.href = 'shopping';
+                        // $("#displayUserName").text(data.User_Name);
+                        // $("#welcomeMessage").show();
+                    } else {
+                        alert(data.message);
+                    }
+
+                });
+            });
+        });
+
+    </script>
+</body>
+
+</html>

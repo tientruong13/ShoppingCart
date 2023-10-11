@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Python</title>
+    <style>
+        .item {
+            width: 20%;
+            float: left;
+            text-align: center;
+            border: solid 0.5px black;
+            padding: 15px;
+            margin: 0 10px 10px 0;
+        }
+
+        .item_photo {
+            width: 50%;
+        }
+
+        .btnRemove {
+            float: right;
+            cursor: pointer;
+        }
+
+        #myCart {
+            position: absolute;
+            right: 0px;
+            bottom: 0px;
+            min-width: 600px;
+            background-color: antiquewhite;
+        }
+
+        #tbMyCart {
+            width: 100%;
+        }
+
+        #tbMyCart td {
+            border: solid 0.5px;
+        }
+
+        .itemQuantity {
+            width: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h2 id="welcomeMessage">Welcome back, <span id="displayUserName"></span></h2>
+    {% for product in items %}
+    <div class="item">
+        <div class="btnRemove" _id="{{product._id}}">[x]</div>
+        <div class="item_name">{{product.Prod_Name}}</div>
+        <img src="{{product.Prod_Photo}}" class="item_photo" />
+        <div class="item_price">{{product.Prod_Price}}</div>
+        <button class="btnAddToCart" _id="{{product._id}}" Prod_Name="{{product.Prod_Name}}"
+            Prod_Price="{{product.Prod_Price}}">Add to cart</button>
+    </div>
+    {% endfor %}
+    <div id="test"></div>
+    <div id="myCart">
+        <table id="tbMyCart"></table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var userName = localStorage.getItem('User_Name');
+            if (userName) {
+                $('#displayUserName').text(userName);
+            } else {
+                $('#welcomeMessage').hide();
+            }
+        });
+
+        var arrayCart = [];
+        $(document).ready(function () {
+            loadCurrentCart();
+            $(document).on('click', '.btnDecrease', function () {
+                var ordering = parseInt($(this).attr("ordering"));
+                var quantity = arrayCart[ordering].quantity;
+                if (quantity > 1) {
+                    arrayCart[ordering].quantity -= 1;
+                }
+                var stringCart = JSON.stringify(arrayCart);
+                setCookie("CART", stringCart, 3);
+                loadCurrentCart();
+            });
+            $(document).on('click', '.btnIncrease', function () {
+                var ordering = parseInt($(this).attr("ordering"));
+                arrayCart[ordering].quantity += 1;
+                var stringCart = JSON.stringify(arrayCart);
+                setCookie("CART", stringCart, 3);
+                loadCurrentCart();
+            });
+            $(document).on('click', '.btnRemove', function () {
+                var ordering = parseInt($(this).attr("ordering"));
+
+                // Remove the item from arrayCart
+                arrayCart.splice(ordering, 1);
+
+                // Update the cart cookie
+                var stringCart = JSON.stringify(arrayCart);
+                setCookie("CART", stringCart, 3);
+
+                // Reload the cart
+                loadCurrentCart();
+            });
+        });
+        $(".btnAddToCart").click(function () {
+            var _id = $(this).attr("_id");
+            window.location.reload();
+            // alert(_id)
+            $.post("/detailProd", { _idProd: _id }, function (data) {
+                console.log(data.prodInfo);
+                var objJson = JSON.parse(data.prodInfo);
+                // console.log(objJson);
+                _id = objJson.info._id.$oid;
+                Prod_Name = objJson.info.Prod_Name;
+                Prod_Photo = objJson.info.Prod_Photo;
+                Prod_Price = parseFloat(objJson.info.Prod_Price);
+
+                console.log(_id + " " + Prod_Price);
+
+                var foundInCart = checkIdsAvailableInCart(_id)
+                if (foundInCart == -1) {
+                    arrayCart.push({
+                        _id: _id,
+                        Prod_Name: Prod_Name,
+                        Prod_Photo: Prod_Photo,
+                        Prod_Price: Prod_Price,
+                        quantity: 1
+
+                    });
+                } else {
+                    arrayCart[foundInCart].quantity += 1;
+                }
+                console.log(arrayCart)
+                var stringCart = JSON.stringify(arrayCart)
+                setCookie("CART", stringCart, 3)
+
+            })
+
+        })
+        $(".btnRemove").click(function () {
+            var _id = $(this).attr("_id");
+            $.post("/removeProd", { _idProd: _id }, function (data) {
+                console.log(data);
+                window.location.reload()
+            })
+        })
+        function checkIdsAvailableInCart(id) {
+            var found = -1;
+            arrayCart.forEach(function (item, key) {
+                if (item._id == id) {
+                    found = key;
+                }
+            });
+            return found;
+        }
+        function loadCurrentCart() {
+            var stringCart = getCookie("CART")
+            if (stringCart == "") {
+                $("#test").html("there is no item in cart");
+            } else {
+                $("#test").html(stringCart);
+                var objJson = JSON.parse(stringCart);
+                console.log(objJson);
+
+                if (objJson.length > 0) {
+                    arrayCart = objJson;
+                    $("#tbMyCart").html('<tr>' +
+                        '<td width="30%">Product</td>' +
+                        '<td>Price</td>' +
+                        '<td>Quantity</td>' +
+                        '<td>Total Item</td>' +
+                        '<td>Remove</td>' +
+                        '</tr>');
+                    var total = 0;
+                    objJson.forEach(function (item, key) {
+                        var totalItem = item.Prod_Price * item.quantity;
+                        total = total + totalItem;
+                        console.log(key);
+                        $("#tbMyCart").append('<tr>' +
+                            '<td width="30%">' + item.Prod_Name + '</td>' +
+                            '<td>' + formatNumber(item.Prod_Price) + '</td>' +
+                            '<td> <button ordering="' + key + '" class="btnDecrease">-</button> <input disabled type="text" class="itemQuantity" value="' + item.quantity + '"/> <button ordering="' + key + '" class="btnIncrease">+</button></td>' +
+                            '<td>' + formatNumber(totalItem) + '</td>' +
+                            '<td><button ordering="' + key + '" class="btnRemove">x</button></td>' +
+                            '</tr>');
+                    })
+                    $("#tbMyCart").append('<tr>' +
+                        '<td colspan="3">Total</td>' +
+                        '<td colspan="2">' + formatNumber(total) + '</td>')
+                }
+            }
+        }
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+        function formatNumber(num) {
+            return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sgin Up</title>
+</head>
+
+<body>
+    <h2>Sign Up</h2>
+    <input type="text" id="User_Email" placeholder="Email" required />
+    <input type="Password" id="Password" placeholder="Pasword" required />
+    <input type="text" id="User_Name" placeholder="User Name" required />
+    <button id="btnregister">Register</button>
+    <h2>Welcome to Python Store</h2>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $(document).on('click', '#btnregister', function () {
+                var User_Email = $("#User_Email").val();
+                var Password = $("#Password").val();
+                var User_Name = $("#User_Name").val();
+                $.post("./register", {
+                    User_Email: User_Email,
+                    Password: Password,
+                    User_Name: User_Name,
+                }, function (data) {
+                    console.log(data);
+
+                });
+            });
+        });
+
+    </script>
+</body>
+
+</html>
